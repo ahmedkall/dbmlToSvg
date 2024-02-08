@@ -17,7 +17,7 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v2
         with:
-          node-version: '20'
+          node-version: '14'
 
       - name: Install DBML Renderer
         run: npm install -g @softwaretechnik/dbml-renderer
@@ -27,21 +27,13 @@ jobs:
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
           
-          # Check for initial commit situation
-          if git rev-parse HEAD >/dev/null 2>&1; then
-            # Repository has at least one commit
-            modified_dbml=$(git diff --name-only HEAD^ HEAD -- '*.dbml')
-          else
-            # This is the first commit
-            modified_dbml=$(git ls-files -o --exclude-standard -- '*.dbml')
-          fi
-          
+          # Safely list modified DBML files or all if it's the first push
+          modified_dbml=$(git diff --name-only HEAD HEAD~1 -- '*.dbml' 2>/dev/null || git ls-files '*.dbml')
           echo "Modified DBML files: $modified_dbml"
           changes_made=false
           
-          for file in $modified_dbml
-          do
-            if [ -f "$file" ]; then
+          for file in $modified_dbml; do
+            if [ -n "$file" ]; then
               svg_file="${file%.dbml}.svg"
               dbml-renderer -i "$file" -o "$svg_file"
               git add "$svg_file"
