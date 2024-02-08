@@ -4,6 +4,7 @@ on:
   push:
     paths:
       - '**/*.dbml'
+
 permissions:
   contents: write
 
@@ -16,7 +17,7 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v2
         with:
-          node-version: '20'
+          node-version: '14' # Specify the Node.js version compatible with dbml-renderer
 
       - name: Install DBML Renderer
         run: npm install -g @softwaretechnik/dbml-renderer
@@ -24,17 +25,19 @@ jobs:
       - name: Find Modified DBML Files
         id: modified_files
         run: |
-          echo "::set-output name=list::$(git diff --name-only HEAD^ HEAD | grep '\.dbml$')"
+          modified_dbml=$(git diff --name-only HEAD^ HEAD | grep '\.dbml$')
+          echo "Modified DBML files: $modified_dbml"
+          echo "::set-output name=list::$modified_dbml"
 
-      - name: Delete Existing SVG Files
+      - name: Delete Existing SVG Files from Repo
         if: steps.modified_files.outputs.list != ''
         run: |
           for file in ${{ steps.modified_files.outputs.list }}
           do
             svg_file="${file%.dbml}.svg"
             if [ -f "$svg_file" ]; then
-              echo "Deleting $svg_file"
-              rm "$svg_file"
+              git rm "$svg_file"
+              git commit -m "Remove outdated SVG for $file"
             fi
           done
 
@@ -43,7 +46,6 @@ jobs:
         run: |
           for file in ${{ steps.modified_files.outputs.list }}
           do
-            echo "Processing $file"
             dbml-renderer -i $file -o "${file%.dbml}.svg"
           done
 
