@@ -1,65 +1,27 @@
-Table users  [headercolor: #27ae60] {
-  user_id int [pk, increment]
-  username text
-  password text
-  avatar text
-  fullname text
-  birthday date
-  gender int
-  email text
-  city text
-  phone text 
-  point int
+Table follows {
+  following_user_id integer
+  followed_user_id integer
+  created_at timestamp 
 }
 
-table cinemas  [headercolor: #27ae60] {
-  cinema_id int [pk,increment]
-  cinema_name text
-  cinema_address text
+Table users {
+  id integer [primary key]
+  username varchar
+  role varchar
+  created_at timestamp
 }
 
-table movies [headercolor: #27ae60] {
-  movie_id int [pk, increment]
-  movie_name text
-  movie_description text
-  movie_trailer text
-  movie_cens text
-  movie_genres text
-  movie_release date
-  movie_lenght time
-  movie_format text
-  movie_poster text
+Table posts {
+  id integer [primary key]
+  title varchar
+  body text [note: 'Content of the post']
+  user_id integer
+  status varchar
+  created_at timestamp
 }
 
-table seats  [headercolor: #27ae60] {
-  seat_id int [pk, increment]
-  seat_type int
-  room_id int [ref: > room.room_id]
-  row text
-  number int
-  
-}
+Ref: posts.user_id > users.id // many-to-one
 
-table room  [headercolor: #27ae60] {
-  room_id int [pk, increment]
-  cinema_id int [ref: > cinemas.cinema_id]
-  room_name text
-}
+Ref: users.id < follows.following_user_id
 
-table schedule [headercolor: #27ae60] {
-  schedule_id int [pk, increment]
-  movie_id int [ref: > movies.movie_id]
-  room_id int [ref: > room.room_id]
-  schedule_date date
-  schedule_start time
-  schedule_end time
-}
-
-table booking [headercolor: #27ae60] {
-  booking_id int [pk, increment]
-  user_id int [ref: > users.user_id]
-  schedule_id int [ref: > schedule.schedule_id]
-  seat_id int [ref: > seats.seat_id]
-  price double
-  seat_status int
-}
+Ref: users.id < follows.followed_user_id
