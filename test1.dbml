@@ -63,3 +63,4 @@ table booking [headercolor: #27ae60] {
   price double
   seat_status int
 }
+//
