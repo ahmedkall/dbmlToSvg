@@ -16,15 +16,35 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v2
         with:
-          node-version: '20' 
+          node-version: '14' # Specify the Node.js version compatible with dbml-renderer
 
       - name: Install DBML Renderer
         run: npm install -g @softwaretechnik/dbml-renderer
 
-      - name: Convert DBML to SVG
+      - name: Find Modified DBML Files
+        id: modified_files
         run: |
-          for file in $(find . -name "*.dbml"); do
-            dbml-renderer -i $file -o $file.svg
+          echo "::set-output name=list::$(git diff --name-only HEAD^ HEAD | grep '\.dbml$')"
+
+      - name: Delete Existing SVG Files
+        if: steps.modified_files.outputs.list != ''
+        run: |
+          for file in ${{ steps.modified_files.outputs.list }}
+          do
+            svg_file="${file%.dbml}.svg"
+            if [ -f "$svg_file" ]; then
+              echo "Deleting $svg_file"
+              rm "$svg_file"
+            fi
+          done
+
+      - name: Convert Modified DBML to SVG
+        if: steps.modified_files.outputs.list != ''
+        run: |
+          for file in ${{ steps.modified_files.outputs.list }}
+          do
+            echo "Processing $file"
+            dbml-renderer -i $file -o "${file%.dbml}.svg"
           done
 
       - name: Commit and Push SVG Images
