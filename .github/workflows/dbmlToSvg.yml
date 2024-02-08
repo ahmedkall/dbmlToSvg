@@ -25,9 +25,14 @@ jobs:
       - name: Find Modified DBML Files
         id: modified_files
         run: |
-          modified_dbml=$(git diff --name-only HEAD^ HEAD | grep '\.dbml$')
+          if [ "$(git rev-parse --verify HEAD^)" ]; then
+            modified_dbml=$(git diff --name-only HEAD^ HEAD -- '*.dbml')
+          else
+            modified_dbml=$(git ls-files -o --exclude-standard -- '*.dbml')
+          fi
           echo "Modified DBML files: $modified_dbml"
           echo "::set-output name=list::$modified_dbml"
+
 
       - name: Delete Existing SVG Files from Repo
         if: steps.modified_files.outputs.list != ''
