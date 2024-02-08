@@ -17,47 +17,28 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v2
         with:
-          node-version: '14' # Specify the Node.js version compatible with dbml-renderer
+          node-version: '20'
 
       - name: Install DBML Renderer
         run: npm install -g @softwaretechnik/dbml-renderer
 
-      - name: Find Modified DBML Files
-        id: modified_files
-        run: |
-          if [ "$(git rev-parse --verify HEAD^)" ]; then
-            modified_dbml=$(git diff --name-only HEAD^ HEAD -- '*.dbml')
-          else
-            modified_dbml=$(git ls-files -o --exclude-standard -- '*.dbml')
-          fi
-          echo "Modified DBML files: $modified_dbml"
-          echo "::set-output name=list::$modified_dbml"
-
-
-      - name: Delete Existing SVG Files from Repo
-        if: steps.modified_files.outputs.list != ''
-        run: |
-          for file in ${{ steps.modified_files.outputs.list }}
-          do
-            svg_file="${file%.dbml}.svg"
-            if [ -f "$svg_file" ]; then
-              git rm "$svg_file"
-              git commit -m "Remove outdated SVG for $file"
-            fi
-          done
-
-      - name: Convert Modified DBML to SVG
-        if: steps.modified_files.outputs.list != ''
-        run: |
-          for file in ${{ steps.modified_files.outputs.list }}
-          do
-            dbml-renderer -i $file -o "${file%.dbml}.svg"
-          done
-
-      - name: Commit and Push SVG Images
+      - name: Convert DBML to SVG and Commit Changes
         run: |
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
-          git add .
-          git commit -m "Update DBML SVG Diagrams" --allow-empty
-          git push
+          
+          modified_dbml=$(git diff --name-only HEAD^ HEAD -- '*.dbml' || git ls-files -o --exclude-standard -- '*.dbml')
+          echo "Modified DBML files: $modified_dbml"
+          
+          for file in $modified_dbml
+          do
+            svg_file="${file%.dbml}.svg"
+            dbml-renderer -i "$file" -o "$svg_file"
+            git add "$svg_file"
+          done
+          
+          if [ -n "$modified_dbml" ]; then
+            git commit -m "Update DBML SVG Diagrams" --allow-empty
+            git push
+          else
+            echo "No DBML files were modified."
