@@ -24,7 +24,9 @@ jobs:
           file="./schema.dbml" # Adjust the path as needed
           svg="${file%.dbml}.svg"
           if [ -f "$file" ]; then
-            chmod +w "$svg" # Ensure the file is writable
+            if [ -f "$svg" ]; then
+              chmod +w "$svg" # Ensure the file is writable
+            fi
             dbml-renderer -i "$file" -o "$svg"
             echo "$svg has been updated."
           else
@@ -42,3 +44,4 @@ jobs:
           else
             git push
           fi
+
