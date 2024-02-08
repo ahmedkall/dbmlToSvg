@@ -27,18 +27,30 @@ jobs:
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
           
-          modified_dbml=$(git diff --name-only HEAD^ HEAD -- '*.dbml' || git ls-files -o --exclude-standard -- '*.dbml')
+          # Check for initial commit situation
+          if git rev-parse HEAD >/dev/null 2>&1; then
+            # Repository has at least one commit
+            modified_dbml=$(git diff --name-only HEAD^ HEAD -- '*.dbml')
+          else
+            # This is the first commit
+            modified_dbml=$(git ls-files -o --exclude-standard -- '*.dbml')
+          fi
+          
           echo "Modified DBML files: $modified_dbml"
+          changes_made=false
           
           for file in $modified_dbml
           do
-            svg_file="${file%.dbml}.svg"
-            dbml-renderer -i "$file" -o "$svg_file"
-            git add "$svg_file"
+            if [ -f "$file" ]; then
+              svg_file="${file%.dbml}.svg"
+              dbml-renderer -i "$file" -o "$svg_file"
+              git add "$svg_file"
+              changes_made=true
+            fi
           done
           
-          if [ -n "$modified_dbml" ]; then
+          if [ "$changes_made" = true ]; then
             git commit -m "Update DBML SVG Diagrams" --allow-empty
             git push
           else
-            echo "No DBML files were modified."
+            echo "No DBML files were modified or no changes needed."
