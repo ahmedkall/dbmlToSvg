@@ -37,11 +37,15 @@ jobs:
         run: |
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
-          git add -f "$svg" # Force add the SVG file
-          git commit -m "Update specific DBML SVG Diagram" --allow-empty
-          if git status | grep 'nothing to commit'; then
-            echo "No changes to commit."
+          if [ -f "$svg" ]; then
+            git add -f "$svg" # Force add the SVG file
+            git commit -m "Update specific DBML SVG Diagram" --allow-empty
+            if ! git diff --cached --exit-code --quiet; then
+              git push
+            else
+              echo "No changes to commit."
+            fi
           else
-            git push
+            echo "SVG file does not exist and cannot be added to git."
           fi
 
