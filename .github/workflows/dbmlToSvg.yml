@@ -1,10 +1,12 @@
-name: Convert Specific DBML to SVG
+name: Convert DBML to SVG
 
 on:
   push:
     paths:
-      - '**/schema.dbml' # Specify the path to the specific DBML file
+      - '**/*.dbml'
 
+permissions:
+  contents: write  
 jobs:
   convert:
     runs-on: ubuntu-latest
@@ -14,38 +16,19 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v2
         with:
-          node-version: '20' # Specify the Node.js version
+          node-version: '20' 
 
       - name: Install DBML Renderer
         run: npm install -g @softwaretechnik/dbml-renderer
 
-      - name: Convert Specific DBML to SVG
-        run: |
-          file="./schema.dbml" # Adjust the path as needed
-          svg="${file%.dbml}.svg"
-          if [ -f "$file" ]; then
-            if [ -f "$svg" ]; then
-              chmod +w "$svg" # Ensure the file is writable
-            fi
-            dbml-renderer -i "$file" -o "$svg"
-            echo "$svg has been updated."
-          else
-            echo "The specified DBML file does not exist."
-          fi
+      - name: Convert DBML to SVG
+        run: dbml-renderer -i ./schema.dbml -o ./schema.dbml.svg
 
-      - name: Commit and Push SVG Image
+
+      - name: Commit and Push SVG Images
         run: |
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
-          if [ -f "$svg" ]; then
-            git add -f "$svg" # Force add the SVG file
-            git commit -m "Update specific DBML SVG Diagram" --allow-empty
-            if ! git diff --cached --exit-code --quiet; then
-              git push
-            else
-              echo "No changes to commit."
-            fi
-          else
-            echo "SVG file does not exist and cannot be added to git."
-          fi
-
+          git add .
+          git commit -m "Update DBML SVG Diagrams" --allow-empty
+          git push
