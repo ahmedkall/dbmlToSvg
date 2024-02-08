@@ -21,9 +21,10 @@ jobs:
 
       - name: Convert Specific DBML to SVG
         run: |
-          file="./path/to/target.dbml" # Specify the exact path to your DBML file
+          file="./schema.dbml" # Adjust the path as needed
+          svg="${file%.dbml}.svg"
           if [ -f "$file" ]; then
-            svg="${file%.dbml}.svg"
+            chmod +w "$svg" # Ensure the file is writable
             dbml-renderer -i "$file" -o "$svg"
             echo "$svg has been updated."
           else
@@ -34,7 +35,7 @@ jobs:
         run: |
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
-          git add .
+          git add -f "$svg" # Force add the SVG file
           git commit -m "Update specific DBML SVG Diagram" --allow-empty
           if git status | grep 'nothing to commit'; then
             echo "No changes to commit."
