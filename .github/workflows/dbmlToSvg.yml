@@ -1,12 +1,9 @@
-name: Convert DBML to SVG
+name: Convert Specific DBML to SVG
 
 on:
   push:
     paths:
-      - '**/*.dbml'
-
-permissions:
-  contents: write
+      - '**/target.dbml' # Specify the path to the specific DBML file
 
 jobs:
   convert:
@@ -17,32 +14,30 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v2
         with:
-          node-version: '20'
+          node-version: '20' # Specify the Node.js version
 
       - name: Install DBML Renderer
         run: npm install -g @softwaretechnik/dbml-renderer
 
-      - name: Convert DBML to SVG and Commit Changes
+      - name: Convert Specific DBML to SVG
+        run: |
+          file="./path/to/target.dbml" # Specify the exact path to your DBML file
+          if [ -f "$file" ]; then
+            svg="${file%.dbml}.svg"
+            dbml-renderer -i "$file" -o "$svg"
+            echo "$svg has been updated."
+          else
+            echo "The specified DBML file does not exist."
+          fi
+
+      - name: Commit and Push SVG Image
         run: |
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
-          
-          # Safely list modified DBML files or all if it's the first push
-          modified_dbml=$(git diff --name-only HEAD HEAD~1 -- '*.dbml' 2>/dev/null || git ls-files '*.dbml')
-          echo "Modified DBML files: $modified_dbml"
-          changes_made=false
-          
-          for file in $modified_dbml; do
-            if [ -n "$file" ]; then
-              svg_file="${file%.dbml}.svg"
-              dbml-renderer -i "$file" -o "$svg_file"
-              git add "$svg_file"
-              changes_made=true
-            fi
-          done
-          
-          if [ "$changes_made" = true ]; then
-            git commit -m "Update DBML SVG Diagrams" --allow-empty
-            git push
+          git add .
+          git commit -m "Update specific DBML SVG Diagram" --allow-empty
+          if git status | grep 'nothing to commit'; then
+            echo "No changes to commit."
           else
-            echo "No DBML files were modified or no changes needed."
+            git push
+          fi
