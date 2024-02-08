@@ -3,7 +3,7 @@ name: Convert Specific DBML to SVG
 on:
   push:
     paths:
-      - '**/target.dbml' # Specify the path to the specific DBML file
+      - '**/schema.dbml' # Specify the path to the specific DBML file
 
 jobs:
   convert:
